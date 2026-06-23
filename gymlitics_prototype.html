@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GYMLITICS — Prototipo de Producto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy:#1E3A8A;
+  --blue:#3B82F6;
+  --blue-soft:#EFF4FF;
+  --ink:#0F1B3D;
+  --slate:#5B6478;
+  --line:#E6E9F2;
+  --bg:#F5F6FA;
+  --white:#FFFFFF;
+  --green:#10B981;
+  --green-soft:#E7F8F1;
+  --amber:#F59E0B;
+  --amber-soft:#FEF3DD;
+  --red:#EF4444;
+  --red-soft:#FDE8E8;
+  --radius-lg:18px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow:0 1px 2px rgba(15,27,61,.04), 0 8px 24px -8px rgba(15,27,61,.10);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* ===== App switcher shell ===== */
+.shell-top{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 24px; background:var(--ink); color:#fff;
+}
+.brand{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.2px; font-size:15px;}
+.brand .dot-mark{
+  width:26px;height:26px;border-radius:8px;
+  background:linear-gradient(135deg,var(--blue),var(--navy));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600;
+}
+.switcher{display:flex; gap:4px; background:rgba(255,255,255,.08); padding:4px; border-radius:10px;}
+.switcher button{
+  border:none; background:transparent; color:rgba(255,255,255,.65);
+  padding:7px 16px; font-size:13px; font-weight:600; border-radius:7px; cursor:pointer;
+  font-family:inherit; transition:.15s;
+}
+.switcher button.active{background:#fff; color:var(--ink);}
+.tag-mvp{font-size:11px; color:rgba(255,255,255,.45); font-family:'IBM Plex Mono',monospace;}
+
+/* ===== WEB APP LAYOUT ===== */
+#web-app{display:none;}
+#web-app.active{display:flex;}
+.web-wrap{width:100%; min-height:calc(100vh - 54px);}
+.sidebar{
+  width:228px; background:var(--white); border-right:1px solid var(--line);
+  padding:18px 12px; flex-shrink:0;
+}
+.side-section-label{font-size:11px; color:#A6ACBC; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:14px 10px 6px;}
+.side-link{
+  display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:9px;
+  color:var(--slate); font-size:13.5px; font-weight:600; cursor:pointer; margin-bottom:2px;
+}
+.side-link:hover{background:var(--bg);}
+.side-link.active{background:var(--blue-soft); color:var(--navy);}
+.side-link .ic{width:17px; height:17px; flex-shrink:0;}
+.side-foot{margin-top:auto; padding:12px 10px; border-top:1px solid var(--line); display:flex; gap:10px; align-items:center;}
+.avatar{width:32px;height:32px;border-radius:50%; background:linear-gradient(135deg,var(--blue),var(--navy)); color:#fff; display:flex;align-items:center;justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;}
+.web-main{flex:1; min-width:0; display:flex; flex-direction:column;}
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 28px; background:#fff; border-bottom:1px solid var(--line);
+}
+.topbar h1{font-size:18px; margin:0; font-weight:800;}
+.topbar .sub{font-size:12.5px; color:var(--slate); margin-top:2px;}
+.top-actions{display:flex; align-items:center; gap:10px;}
+.pill{
+  font-size:11.5px; font-weight:700; padding:5px 10px; border-radius:999px;
+  background:var(--green-soft); color:#0a8a5f; display:flex; align-items:center; gap:6px;
+}
+.pill .blip{width:6px;height:6px;border-radius:50%; background:#0a8a5f; box-shadow:0 0 0 0 rgba(10,138,95,.5); animation:pulse 1.8s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(10,138,95,.45);}70%{box-shadow:0 0 0 6px rgba(10,138,95,0);}100%{box-shadow:0 0 0 0 rgba(10,138,95,0);}}
+.btn{
+  border:none; border-radius:var(--radius-sm); font-family:inherit; font-weight:600; font-size:13px;
+  padding:9px 15px; cursor:pointer; display:inline-flex; align-items:center; gap:7px;
+}
+.btn-primary{background:var(--navy); color:#fff;}
+.btn-primary:hover{background:#162d6e;}
+.btn-ghost{background:#fff; border:1px solid var(--line); color:var(--ink);}
+.btn-ghost:hover{background:var(--bg);}
+.btn-sm{padding:6px 11px; font-size:12px;}
+.page{padding:24px 28px; flex:1;}
+.view{display:none;}
+.view.active{display:block;}
+
+/* grid + cards */
+.kpi-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:18px;}
+.card{background:#fff; border:1px solid var(--line); border-radius:var(--radius-lg); padding:18px; box-shadow:var(--shadow);}
+.kpi .label{font-size:12px; color:var(--slate); font-weight:600; display:flex; align-items:center; justify-content:space-between;}
+.kpi .value{font-size:26px; font-weight:800; margin-top:8px; font-family:'IBM Plex Mono',monospace;}
+.kpi .delta{font-size:11.5px; font-weight:700; margin-top:4px;}
+.delta.up{color:#0a8a5f;} .delta.down{color:var(--red);}
+.row2{display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-bottom:14px;}
+.row3{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;}
+.card h3{font-size:14.5px; margin:0 0 2px; font-weight:700;}
+.card .card-sub{font-size:12px; color:var(--slate); margin-bottom:14px;}
+
+/* heatmap signature element */
+.heatmap{display:flex; align-items:flex-end; gap:5px; height:108px; padding-top:8px;}
+.heatmap .bar-wrap{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;}
+.heatmap .bar{width:100%; border-radius:5px 5px 2px 2px; background:var(--blue-soft); transition:.2s;}
+.heatmap .bar.peak{background:linear-gradient(180deg,var(--navy),var(--blue));}
+.heatmap .hr{font-size:10px; color:var(--slate); font-family:'IBM Plex Mono',monospace;}
+
+.toplist{display:flex; flex-direction:column; gap:11px;}
+.toplist .item{display:flex; align-items:center; gap:10px;}
+.toplist .rank{width:20px; height:20px; border-radius:6px; background:var(--bg); color:var(--slate); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; flex-shrink:0;}
+.toplist .name{font-size:12.5px; font-weight:600; width:108px; flex-shrink:0;}
+.toplist .track{flex:1; height:7px; background:var(--bg); border-radius:4px; overflow:hidden;}
+.toplist .fill{height:100%; background:linear-gradient(90deg,var(--blue),var(--navy)); border-radius:4px;}
+.toplist .pct{font-size:11.5px; font-weight:700; color:var(--slate); width:32px; text-align:right; font-family:'IBM Plex Mono',monospace;}
+
+.alert{display:flex; gap:10px; padding:11px; border-radius:var(--radius-md); margin-bottom:8px; border:1px solid var(--line);}
+.alert.warn{background:var(--amber-soft); border-color:#f7e2ad;}
+.alert.crit{background:var(--red-soft); border-color:#f6c9c9;}
+.alert .ic{width:28px;height:28px;border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:14px;}
+.alert.warn .ic{background:#fbe4ab; color:#92660a;}
+.alert.crit .ic{background:#f6c9c9; color:#9c1c1c;}
+.alert .t{font-size:12.5px; font-weight:700;}
+.alert .d{font-size:11.5px; color:var(--slate); margin-top:2px; line-height:1.4;}
+
+/* tables */
+table{width:100%; border-collapse:collapse;}
+th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--slate); font-weight:700; padding:9px 10px; border-bottom:1px solid var(--line);}
+td{padding:11px 10px; font-size:13px; border-bottom:1px solid var(--line);}
+tr:last-child td{border-bottom:none;}
+.status-chip{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:999px;}
+.status-chip.disp{background:var(--green-soft); color:#0a8a5f;}
+.status-chip.occ{background:var(--red-soft); color:#b91c1c;}
+.status-chip.maint{background:var(--amber-soft); color:#92660a;}
+.dot{width:6px;height:6px;border-radius:50%; background:currentColor;}
+.toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+.search{padding:8px 12px; border:1px solid var(--line); border-radius:var(--radius-sm); font-size:12.5px; width:220px; font-family:inherit;}
+.filters{display:flex; gap:8px;}
+.chip-filter{padding:6px 12px; border-radius:999px; border:1px solid var(--line); font-size:12px; font-weight:600; background:#fff; color:var(--slate); cursor:pointer;}
+.chip-filter.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+.qty-row{display:flex; gap:14px; margin-bottom:14px;}
+.qty-card{flex:1; background:#fff; border:1px solid var(--line); border-radius:var(--radius-md); padding:13px 16px;}
+.qty-card .n{font-size:20px; font-weight:800; font-family:'IBM Plex Mono',monospace;}
+.qty-card .l{font-size:11.5px; color:var(--slate); font-weight:600;}
+.actions-cell{display:flex; gap:6px;}
+.icon-btn{width:28px;height:28px;border-radius:7px; border:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; color:var(--slate);}
+.icon-btn:hover{background:var(--bg);}
+
+.kpi-strip{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:14px;}
+canvas{max-width:100%;}
+
+.usr-meta{display:flex; align-items:center; gap:9px;}
+.usr-avatar{width:30px;height:30px;border-radius:50%; background:var(--blue-soft); color:var(--navy); font-weight:700; font-size:11.5px; display:flex; align-items:center; justify-content:center;}
+
+.settings-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.set-row{display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--line);}
+.set-row:last-child{border-bottom:none;}
+.set-row .t{font-size:13px; font-weight:600;}
+.set-row .d{font-size:11.5px; color:var(--slate); margin-top:2px;}
+.switch{width:38px; height:22px; border-radius:999px; background:var(--line); position:relative; cursor:pointer; flex-shrink:0;}
+.switch.on{background:var(--green);}
+.switch::after{content:''; position:absolute; width:18px;height:18px; background:#fff; border-radius:50%; top:2px; left:2px; transition:.15s; box-shadow:0 1px 2px rgba(0,0,0,.2);}
+.switch.on::after{left:18px;}
+.plan-card{background:linear-gradient(135deg,var(--navy),#142b6b); color:#fff; border-radius:var(--radius-lg); padding:20px;}
+.plan-card .plan-name{font-size:11px; opacity:.7; font-weight:700; letter-spacing:.06em; text-transform:uppercase;}
+.plan-card .plan-price{font-size:26px; font-weight:800; margin:4px 0; font-family:'IBM Plex Mono',monospace;}
+.branch-row{display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line);}
+.branch-row:last-child{border-bottom:none;}
+
+/* ===== MOBILE APP LAYOUT ===== */
+#mobile-app{display:none;}
+#mobile-app.active{display:flex;}
+.mobile-wrap{width:100%; padding:36px 0 60px; justify-content:center; display:flex; gap:36px; align-items:flex-start; flex-wrap:wrap;}
+.phone{
+  width:340px; height:706px; background:#000; border-radius:46px; padding:12px;
+  box-shadow:0 24px 60px -16px rgba(15,27,61,.35); flex-shrink:0; position:sticky; top:36px;
+}
+.phone-screen{
+  width:100%; height:100%; background:var(--bg); border-radius:36px; overflow:hidden;
+  position:relative; display:flex; flex-direction:column;
+}
+.notch{position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#000; border-radius:0 0 16px 16px; z-index:5;}
+.m-status{display:flex; justify-content:space-between; padding:14px 22px 4px; font-size:12px; font-weight:700; font-family:'IBM Plex Mono',monospace;}
+.m-content{flex:1; overflow:hidden; position:relative;}
+.m-screen{position:absolute; inset:0; padding:14px 18px 90px; overflow-y:auto; display:none;}
+.m-screen.active{display:block;}
+.m-navbar{display:flex; align-items:center; justify-content:space-between; position:absolute; bottom:0; left:0; right:0; background:rgba(255,255,255,.92); backdrop-filter:blur(6px); border-top:1px solid var(--line); padding:9px 10px 14px;}
+.m-navbar .m-tab{flex:1; text-align:center; font-size:9.5px; font-weight:700; color:#A6ACBC; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px;}
+.m-navbar .m-tab.active{color:var(--navy);}
+.m-navbar .m-tab .m-ic{width:19px; height:19px;}
+
+.m-card{background:#fff; border-radius:16px; padding:14px; box-shadow:var(--shadow); margin-bottom:12px;}
+.m-h1{font-size:19px; font-weight:800; margin:6px 0 2px;}
+.m-sub{font-size:12px; color:var(--slate); margin-bottom:14px;}
+.m-logo{display:flex; align-items:center; gap:8px; font-weight:800; font-size:16px; justify-content:center; margin:50px 0 6px;}
+.m-logo .dot-mark{width:30px;height:30px;border-radius:9px; background:linear-gradient(135deg,var(--blue),var(--navy)); display:flex;align-items:center;justify-content:center; font-family:'IBM Plex Mono',monospace; color:#fff; font-size:14px; font-weight:700;}
+.m-field-label{font-size:11.5px; font-weight:700; color:var(--slate); margin:14px 0 6px;}
+.m-input{width:100%; border:1px solid var(--line); border-radius:11px; padding:12px 13px; font-size:13.5px; font-family:inherit; background:#fff;}
+.m-btn{width:100%; background:var(--navy); color:#fff; border:none; border-radius:12px; padding:13px; font-weight:700; font-size:14px; font-family:inherit; margin-top:18px; cursor:pointer;}
+.m-link{display:block; text-align:center; font-size:12px; color:var(--blue); font-weight:600; margin-top:14px;}
+
+.ring-wrap{display:flex; align-items:center; gap:16px;}
+.ring{position:relative; width:88px; height:88px; flex-shrink:0;}
+.ring svg{transform:rotate(-90deg);}
+.ring .pct{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; font-family:'IBM Plex Mono',monospace;}
+.legend-row{display:flex; gap:14px; margin-top:4px;}
+.legend-item{font-size:11px; color:var(--slate); display:flex; align-items:center; gap:5px; font-weight:600;}
+.legend-dot{width:7px;height:7px;border-radius:50%;}
+
+.m-grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;}
+.m-stat{background:#fff; border-radius:14px; padding:12px; box-shadow:var(--shadow);}
+.m-stat .v{font-size:18px; font-weight:800; font-family:'IBM Plex Mono',monospace;}
+.m-stat .l{font-size:10.5px; color:var(--slate); font-weight:600;}
+
+.machine-card{background:#fff; border-radius:14px; padding:12px 13px; box-shadow:var(--shadow); margin-bottom:9px; display:flex; align-items:center; gap:11px;}
+.m-status-dot{width:10px;height:10px;border-radius:50%; flex-shrink:0;}
+.m-status-dot.g{background:var(--green);} .m-status-dot.r{background:var(--red);} .m-status-dot.y{background:var(--amber);}
+.machine-card .info{flex:1;}
+.machine-card .nm{font-size:13.5px; font-weight:700;}
+.machine-card .cat{font-size:11px; color:var(--slate);}
+.machine-card .wait{font-size:10.5px; font-weight:700; margin-top:3px;}
+.machine-card .wait.g{color:#0a8a5f;} .machine-card .wait.r{color:#b91c1c;} .machine-card .wait.y{color:#92660a;}
+.mini-btn{background:var(--blue-soft); color:var(--navy); border:none; border-radius:9px; padding:7px 11px; font-size:11px; font-weight:700; font-family:inherit; cursor:pointer; flex-shrink:0;}
+
+.queue-position{text-align:center; padding:18px 0 6px;}
+.queue-position .num{font-size:54px; font-weight:800; font-family:'IBM Plex Mono',monospace; color:var(--navy); line-height:1;}
+.queue-position .lbl{font-size:11.5px; color:var(--slate); font-weight:700; text-transform:uppercase; letter-spacing:.05em;}
+.avatars-ahead{display:flex; justify-content:center; margin:14px 0;}
+.avatars-ahead .av{width:32px;height:32px;border-radius:50%; background:var(--blue-soft); color:var(--navy); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; border:2px solid #fff; margin-left:-8px;}
+.avatars-ahead .av:first-child{margin-left:0;}
+.queue-time{background:var(--blue-soft); border-radius:14px; padding:14px; text-align:center; margin:14px 0;}
+.queue-time .big{font-size:24px; font-weight:800; color:var(--navy); font-family:'IBM Plex Mono',monospace;}
+.cancel-btn{width:100%; background:#fff; border:1px solid var(--red); color:var(--red); border-radius:12px; padding:12px; font-weight:700; font-size:13px; font-family:inherit; margin-top:8px; cursor:pointer;}
+
+.notif-item{display:flex; gap:10px; background:#fff; border-radius:14px; padding:12px; box-shadow:var(--shadow); margin-bottom:9px;}
+.notif-item .ic{width:34px;height:34px;border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:15px;}
+.notif-item .ic.blue{background:var(--blue-soft);} .notif-item .ic.green{background:var(--green-soft);} .notif-item .ic.gray{background:var(--bg);}
+.notif-item .t{font-size:12.5px; font-weight:700;}
+.notif-item .d{font-size:11px; color:var(--slate); margin-top:1px;}
+.notif-item .time{font-size:10px; color:#A6ACBC; margin-top:4px; font-weight:600;}
+
+.exercise-row{display:flex; align-items:center; gap:11px; background:#fff; border-radius:13px; padding:10px 12px; margin-bottom:8px; box-shadow:var(--shadow);}
+.exercise-row .n{width:24px;height:24px; border-radius:7px; background:var(--blue-soft); color:var(--navy); font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:'IBM Plex Mono',monospace;}
+.exercise-row .et{font-size:13px; font-weight:700;}
+.exercise-row .em{font-size:10.5px; color:var(--slate);}
+
+.profile-head{display:flex; align-items:center; gap:13px; margin-bottom:16px;}
+.profile-head .av{width:54px;height:54px;border-radius:50%; background:linear-gradient(135deg,var(--blue),var(--navy)); color:#fff; font-weight:800; font-size:18px; display:flex; align-items:center; justify-content:center;}
+.profile-head .nm{font-size:15.5px; font-weight:800;}
+.profile-head .since{font-size:11px; color:var(--slate);}
+.badge-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
+.badge{background:var(--amber-soft); color:#92660a; border-radius:999px; padding:6px 11px; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:5px;}
+
+.section-title{font-size:13px; font-weight:800; margin:16px 0 8px;}
+.bar-mini-row{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+.bar-mini-row .nm{font-size:11px; font-weight:600; width:76px; flex-shrink:0;}
+.bar-mini-row .track{flex:1; height:6px; background:var(--bg); border-radius:4px; overflow:hidden;}
+.bar-mini-row .fill{height:100%; background:linear-gradient(90deg,var(--blue),var(--navy));}
+.bar-mini-row .v{font-size:10.5px; font-weight:700; color:var(--slate); width:34px; text-align:right;}
+
+.mobile-caption{width:340px; text-align:center; margin-top:14px; font-size:12px; color:var(--slate); font-weight:600;}
+.m-login-cta{text-align:center; margin-bottom:10px;}
+.m-login-cta button{background:none; border:none; color:var(--blue); font-weight:700; font-size:11.5px; cursor:pointer; font-family:inherit;}
+
+@media (max-width:980px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .row2,.row3,.kpi-strip,.settings-grid{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="shell-top">
+  <div class="brand"><span class="dot-mark">G</span> GYMLITICS</div>
+  <div class="switcher">
+    <button id="btn-web" class="active" onclick="switchApp('web')">Plataforma Web</button>
+    <button id="btn-mobile" onclick="switchApp('mobile')">App Móvil</button>
+  </div>
+  <div class="tag-mvp">PROTOTIPO MVP — Business Plan 2026</div>
+</div>
+
+<!-- =================== WEB APP =================== -->
+<div id="web-app" class="active web-wrap">
+  <div class="sidebar" style="display:flex; flex-direction:column;">
+    <div style="flex:1;">
+      <div class="side-section-label">General</div>
+      <div class="side-link active" data-view="w-dashboard" onclick="switchWebView('w-dashboard',this)">📊 Dashboard ejecutivo</div>
+      <div class="side-link" data-view="w-machines" onclick="switchWebView('w-machines',this)">🏋️ Gestión de máquinas</div>
+      <div class="side-link" data-view="w-analytics" onclick="switchWebView('w-analytics',this)">📈 Analítica y reportes</div>
+      <div class="side-link" data-view="w-users" onclick="switchWebView('w-users',this)">👥 Gestión de usuarios</div>
+      <div class="side-section-label">Sistema</div>
+      <div class="side-link" data-view="w-settings" onclick="switchWebView('w-settings',this)">⚙️ Configuración</div>
+    </div>
+    <div class="side-foot">
+      <div class="avatar">MR</div>
+      <div>
+        <div style="font-size:12.5px; font-weight:700;">Marcela Rojas</div>
+        <div style="font-size:11px; color:var(--slate);">Gerente — Sucursal Centro</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="web-main">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="w-dashboard">
+      <div class="topbar">
+        <div><h1>Dashboard ejecutivo</h1><div class="sub">Sucursal Centro · Actualizado hace 12 segundos</div></div>
+        <div class="top-actions">
+          <div class="pill"><span class="blip"></span> En vivo</div>
+          <button class="btn btn-ghost">Exportar reporte</button>
+        </div>
+      </div>
+      <div class="page">
+        <div class="kpi-grid">
+          <div class="card kpi"><div class="label">Usuarios activos</div><div class="value">487</div><div class="delta up">↑ 4.2% vs. ayer</div></div>
+          <div class="card kpi"><div class="label">Máquinas disponibles</div><div class="value" style="color:#0a8a5f;">31</div><div class="delta" style="color:var(--slate);">de 50 totales</div></div>
+          <div class="card kpi"><div class="label">Máquinas ocupadas</div><div class="value" style="color:var(--red);">19</div><div class="delta down">↑ 8 vs. hora anterior</div></div>
+          <div class="card kpi"><div class="label">Espera promedio</div><div class="value">6.4<span style="font-size:14px;">min</span></div><div class="delta down">↑ 1.1 min</div></div>
+          <div class="card kpi"><div class="label">Ocupación general</div><div class="value">62%</div><div class="delta up">↑ 6% vs. semana pasada</div></div>
+        </div>
+
+        <div class="row2">
+          <div class="card">
+            <h3>Ocupación por hora</h3>
+            <div class="card-sub">Hoy · 6:00 a 22:00 · pico estimado 18:00–20:00</div>
+            <div class="heatmap" id="heatmapWeb"></div>
+          </div>
+          <div class="card">
+            <h3>Top 5 máquinas más usadas</h3>
+            <div class="card-sub">Últimas 24 horas</div>
+            <div class="toplist">
+              <div class="item"><div class="rank">1</div><div class="name">Máquina Smith</div><div class="track"><div class="fill" style="width:93%;"></div></div><div class="pct">93%</div></div>
+              <div class="item"><div class="rank">2</div><div class="name">Prensa de piernas</div><div class="track"><div class="fill" style="width:88%;"></div></div><div class="pct">88%</div></div>
+              <div class="item"><div class="rank">3</div><div class="name">Caminadora</div><div class="track"><div class="fill" style="width:76%;"></div></div><div class="pct">76%</div></div>
+              <div class="item"><div class="rank">4</div><div class="name">Press de banca</div><div class="track"><div class="fill" style="width:69%;"></div></div><div class="pct">69%</div></div>
+              <div class="item"><div class="rank">5</div><div class="name">Remo en polea</div><div class="track"><div class="fill" style="width:61%;"></div></div><div class="pct">61%</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row3">
+          <div class="card">
+            <h3>Alertas de saturación</h3>
+            <div class="card-sub">Generadas automáticamente por el sistema</div>
+            <div class="alert crit"><div class="ic">⚠️</div><div><div class="t">Máquina Smith — 93% de ocupación</div><div class="d">Fila promedio de 4 personas durante las últimas 2 horas. Se recomienda considerar la adquisición de una unidad adicional.</div></div></div>
+            <div class="alert warn"><div class="ic">⏱️</div><div><div class="t">Prensa de piernas — 88% de ocupación</div><div class="d">Tiempo de espera 35% por encima del promedio semanal.</div></div></div>
+            <div class="alert warn"><div class="ic">📍</div><div><div class="t">Zona de cardio — alta demanda 18:00–20:00</div><div class="d">Considerar redistribuir 2 caminadoras desde la zona funcional.</div></div></div>
+          </div>
+          <div class="card">
+            <h3>Recomendaciones automáticas</h3>
+            <div class="card-sub">Basadas en analítica de uso</div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="background:var(--blue-soft); border-radius:12px; padding:12px; font-size:12.5px; color:var(--navy); font-weight:600; line-height:1.5;">Agregar 1 unidad de Máquina Smith reduciría la espera promedio en ~3.1 min.</div>
+              <div style="background:var(--blue-soft); border-radius:12px; padding:12px; font-size:12.5px; color:var(--navy); font-weight:600; line-height:1.5;">Promover horarios de 10:00–12:00 a usuarios frecuentes; ocupación 24% más baja.</div>
+              <div style="background:var(--blue-soft); border-radius:12px; padding:12px; font-size:12.5px; color:var(--navy); font-weight:600; line-height:1.5;">Activar notificación push a usuarios en fila &gt; 10 min de inactividad.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MACHINES -->
+    <div class="view" id="w-machines">
+      <div class="topbar">
+        <div><h1>Gestión de máquinas</h1><div class="sub">50 máquinas registradas · Sucursal Centro</div></div>
+        <div class="top-actions"><button class="btn btn-primary">+ Agregar máquina</button></div>
+      </div>
+      <div class="page">
+        <div class="qty-row">
+          <div class="qty-card"><div class="n" style="color:#0a8a5f;">31</div><div class="l">Disponibles</div></div>
+          <div class="qty-card"><div class="n" style="color:var(--red);">16</div><div class="l">Ocupadas</div></div>
+          <div class="qty-card"><div class="n" style="color:#92660a;">3</div><div class="l">En mantenimiento</div></div>
+          <div class="qty-card"><div class="n">27</div><div class="l">Usuarios en fila (total)</div></div>
+        </div>
+        <div class="card">
+          <div class="toolbar">
+            <input class="search" placeholder="Buscar máquina...">
+            <div class="filters">
+              <div class="chip-filter active">Todas</div>
+              <div class="chip-filter">Disponible</div>
+              <div class="chip-filter">Ocupada</div>
+              <div class="chip-filter">Mantenimiento</div>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Máquina</th><th>Categoría</th><th>Estado</th><th>Tiempo prom. uso</th><th>Usuarios en fila</th><th></th></tr></thead>
+            <tbody id="machinesTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="view" id="w-analytics">
+      <div class="topbar">
+        <div><h1>Analítica y reportes</h1><div class="sub">Tendencias de uso · Sucursal Centro</div></div>
+        <div class="top-actions">
+          <select class="btn btn-ghost" style="font-family:inherit;"><option>Últimos 30 días</option><option>Últimos 7 días</option><option>Hoy</option></select>
+          <button class="btn btn-primary">Descargar PDF</button>
+        </div>
+      </div>
+      <div class="page">
+        <div class="kpi-strip">
+          <div class="card kpi"><div class="label">Hora pico</div><div class="value" style="font-size:20px;">18:00–20:00</div></div>
+          <div class="card kpi"><div class="label">Espera promedio</div><div class="value">6.8<span style="font-size:13px;">min</span></div></div>
+          <div class="card kpi"><div class="label">Ocupación semanal</div><div class="value">58%</div></div>
+          <div class="card kpi"><div class="label">Ocupación mensual</div><div class="value">54%</div></div>
+        </div>
+        <div class="row2">
+          <div class="card"><h3>Tendencia de ocupación</h3><div class="card-sub">Últimas 4 semanas</div><canvas id="lineChart" height="200"></canvas></div>
+          <div class="card"><h3>Máquinas más utilizadas</h3><div class="card-sub">Por categoría</div><canvas id="barChart" height="200"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Ocupación semanal por día</h3><div class="card-sub">Lunes a domingo</div>
+          <canvas id="weekBarChart" height="90"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="view" id="w-users">
+      <div class="topbar">
+        <div><h1>Gestión de usuarios</h1><div class="sub">500 usuarios registrados · Sucursal Centro</div></div>
+        <div class="top-actions"><button class="btn btn-ghost">Exportar CSV</button></div>
+      </div>
+      <div class="page">
+        <div class="qty-row">
+          <div class="qty-card"><div class="n">500</div><div class="l">Usuarios registrados</div></div>
+          <div class="qty-card"><div class="n">487</div><div class="l">Activos hoy</div></div>
+          <div class="qty-card"><div class="n">4.1</div><div class="l">Visitas / semana (prom.)</div></div>
+          <div class="qty-card"><div class="n">52<span style="font-size:13px;">min</span></div><div class="l">Tiempo prom. entrenamiento</div></div>
+        </div>
+        <div class="card">
+          <div class="toolbar"><input class="search" placeholder="Buscar usuario..."><div class="filters"><div class="chip-filter active">Todos</div><div class="chip-filter">Frecuentes</div><div class="chip-filter">Inactivos</div></div></div>
+          <table>
+            <thead><tr><th>Usuario</th><th>Frecuencia</th><th>Tiempo prom. entren.</th><th>Horario favorito</th><th>Máquina favorita</th></tr></thead>
+            <tbody id="usersTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" id="w-settings">
+      <div class="topbar"><div><h1>Configuración</h1><div class="sub">Sucursales, administradores y suscripción</div></div></div>
+      <div class="page">
+        <div class="settings-grid">
+          <div class="card">
+            <h3>Sucursales</h3><div class="card-sub">3 sucursales activas</div>
+            <div class="branch-row"><div><div style="font-weight:700; font-size:13px;">GYMLITICS Centro</div><div style="font-size:11.5px; color:var(--slate);">50 máquinas · 500 usuarios</div></div><span class="status-chip disp">Activa</span></div>
+            <div class="branch-row"><div><div style="font-weight:700; font-size:13px;">GYMLITICS Norte</div><div style="font-size:11.5px; color:var(--slate);">38 máquinas · 312 usuarios</div></div><span class="status-chip disp">Activa</span></div>
+            <div class="branch-row"><div><div style="font-weight:700; font-size:13px;">GYMLITICS Sur</div><div style="font-size:11.5px; color:var(--slate);">0 máquinas · próx. apertura</div></div><span class="status-chip maint">En setup</span></div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:12px;">+ Agregar sucursal</button>
+          </div>
+          <div class="card">
+            <h3>Administradores</h3><div class="card-sub">4 cuentas con acceso</div>
+            <div class="branch-row"><div class="usr-meta"><div class="usr-avatar">MR</div><div><div style="font-weight:700; font-size:13px;">Marcela Rojas</div><div style="font-size:11px; color:var(--slate);">Gerente general</div></div></div><span class="status-chip disp">Activo</span></div>
+            <div class="branch-row"><div class="usr-meta"><div class="usr-avatar">JT</div><div><div style="font-weight:700; font-size:13px;">Jorge Torres</div><div style="font-size:11px; color:var(--slate);">Admin · Sucursal Norte</div></div></div><span class="status-chip disp">Activo</span></div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:12px;">+ Invitar administrador</button>
+          </div>
+          <div class="card">
+            <h3>Notificaciones</h3><div class="card-sub">Alertas automáticas del sistema</div>
+            <div class="set-row"><div><div class="t">Alertas de saturación</div><div class="d">Notificar cuando una máquina supere 85% de ocupación</div></div><div class="switch on"></div></div>
+            <div class="set-row"><div><div class="t">Reporte semanal por correo</div><div class="d">Resumen ejecutivo cada lunes 8:00 AM</div></div><div class="switch on"></div></div>
+            <div class="set-row"><div><div class="t">Alertas de mantenimiento</div><div class="d">Avisar cuando una máquina lleve +5 días sin revisión</div></div><div class="switch"></div></div>
+          </div>
+          <div class="card">
+            <h3>Suscripción</h3><div class="card-sub">Plan y facturación</div>
+            <div class="plan-card">
+              <div class="plan-name">Plan actual</div>
+              <div class="plan-price">Growth — $149<span style="font-size:13px;">/mes</span></div>
+              <div style="font-size:12px; opacity:.85;">Hasta 3 sucursales · 60 máquinas · analítica avanzada</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:12px;">Administrar plan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- =================== MOBILE APP =================== -->
+<div id="mobile-app" class="mobile-wrap">
+
+  <div>
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="notch"></div>
+        <div class="m-status"><span>9:41</span><span>●●●● 5G 🔋</span></div>
+        <div class="m-content">
+
+          <!-- LOGIN -->
+          <div class="m-screen active" id="m-login" style="padding-top:0;">
+            <div class="m-logo"><span class="dot-mark">G</span>GYMLITICS</div>
+            <div style="text-align:center; font-size:12px; color:var(--slate); margin-bottom:10px;">Tu fila virtual al gimnasio</div>
+            <div style="padding:0 4px;">
+              <div class="m-field-label">Correo electrónico</div>
+              <input class="m-input" value="ana.gomez@email.com" readonly>
+              <div class="m-field-label">Contraseña</div>
+              <input class="m-input" type="password" value="••••••••••" readonly>
+              <button class="m-btn" onclick="goHome()">Iniciar sesión</button>
+              <a class="m-link">¿Olvidaste tu contraseña?</a>
+            </div>
+          </div>
+
+          <!-- HOME -->
+          <div class="m-screen" id="m-home">
+            <div class="m-sub" style="margin-bottom:0;">Hola, Ana 👋</div>
+            <div class="m-h1" style="margin-top:0;">Sucursal Centro</div>
+            <div class="m-card">
+              <div class="ring-wrap">
+                <div class="ring">
+                  <svg width="88" height="88"><circle cx="44" cy="44" r="38" stroke="#EFF4FF" stroke-width="9" fill="none"/><circle cx="44" cy="44" r="38" stroke="#1E3A8A" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="238.7" stroke-dashoffset="90.7"/></svg>
+                  <div class="pct">62%</div>
+                </div>
+                <div>
+                  <div style="font-weight:800; font-size:14px;">Ocupación actual</div>
+                  <div class="legend-row" style="flex-direction:column; align-items:flex-start; gap:5px; margin-top:6px;">
+                    <div class="legend-item"><span class="legend-dot" style="background:var(--green);"></span>31 disponibles</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:var(--red);"></span>19 ocupadas</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="m-card" style="background:var(--amber-soft); display:flex; align-items:center; gap:10px;">
+              <span style="font-size:18px;">⏱️</span>
+              <div><div style="font-weight:700; font-size:12.5px; color:#92660a;">Hora pico estimada hoy</div><div style="font-size:11.5px; color:#92660a;">18:00 – 20:00 · evita la espera llegando antes</div></div>
+            </div>
+            <div class="section-title">Tu resumen de esta semana</div>
+            <div class="m-grid2">
+              <div class="m-stat"><div class="v">4</div><div class="l">Visitas</div></div>
+              <div class="m-stat"><div class="v">3h 40m</div><div class="l">Tiempo entrenado</div></div>
+            </div>
+            <div class="section-title">Ocupación por hora</div>
+            <div class="heatmap" id="heatmapMobile" style="height:70px;"></div>
+          </div>
+
+          <!-- AVAILABILITY -->
+          <div class="m-screen" id="m-availability">
+            <div class="m-h1" style="margin-top:0;">Máquinas</div>
+            <div class="m-sub">31 disponibles · 19 ocupadas</div>
+            <div class="machine-card">
+              <div class="m-status-dot g"></div>
+              <div class="info"><div class="nm">Caminadora 03</div><div class="cat">Cardio</div><div class="wait g">Disponible ahora</div></div>
+              <button class="mini-btn">Reservar</button>
+            </div>
+            <div class="machine-card">
+              <div class="m-status-dot r"></div>
+              <div class="info"><div class="nm">Máquina Smith</div><div class="cat">Piernas</div><div class="wait r">4 esperando · ~14 min</div></div>
+              <button class="mini-btn" onclick="goQueue()">Unirme a la fila</button>
+            </div>
+            <div class="machine-card">
+              <div class="m-status-dot y"></div>
+              <div class="info"><div class="nm">Prensa de piernas</div><div class="cat">Piernas</div><div class="wait y">2 esperando · ~7 min</div></div>
+              <button class="mini-btn" onclick="goQueue()">Unirme a la fila</button>
+            </div>
+            <div class="machine-card">
+              <div class="m-status-dot g"></div>
+              <div class="info"><div class="nm">Press de banca</div><div class="cat">Pecho</div><div class="wait g">Disponible ahora</div></div>
+              <button class="mini-btn">Reservar</button>
+            </div>
+            <div class="machine-card">
+              <div class="m-status-dot r"></div>
+              <div class="info"><div class="nm">Remo en polea</div><div class="cat">Espalda</div><div class="wait r">3 esperando · ~9 min</div></div>
+              <button class="mini-btn" onclick="goQueue()">Unirme a la fila</button>
+            </div>
+            <div class="machine-card">
+              <div class="m-status-dot g"></div>
+              <div class="info"><div class="nm">Bicicleta 07</div><div class="cat">Cardio</div><div class="wait g">Disponible ahora</div></div>
+              <button class="mini-btn">Reservar</button>
+            </div>
+          </div>
+
+          <!-- QUEUE -->
+          <div class="m-screen" id="m-queue">
+            <div class="m-h1" style="margin-top:0;">Tu fila virtual</div>
+            <div class="m-sub">Máquina Smith · Piernas</div>
+            <div class="m-card">
+              <div class="queue-position"><div class="num">#2</div><div class="lbl">Tu posición</div></div>
+              <div class="avatars-ahead"><div class="av">JL</div><div class="av">MT</div></div>
+              <div class="queue-time"><div style="font-size:11px; color:var(--navy); font-weight:700;">Tiempo estimado restante</div><div class="big">7 min</div></div>
+              <button class="cancel-btn">Salir de la fila</button>
+            </div>
+            <div class="m-card" style="background:var(--blue-soft);">
+              <div style="font-size:12px; font-weight:700; color:var(--navy);">💡 Te avisaremos</div>
+              <div style="font-size:11.5px; color:var(--navy); margin-top:3px;">Recibirás una notificación 3 minutos antes de tu turno.</div>
+            </div>
+          </div>
+
+          <!-- NOTIFICATIONS -->
+          <div class="m-screen" id="m-notifs">
+            <div class="m-h1" style="margin-top:0;">Notificaciones</div>
+            <div class="notif-item"><div class="ic blue">⏰</div><div><div class="t">Tu turno comienza en 3 minutos</div><div class="d">Máquina Smith — dirígete a la zona de piernas</div><div class="time">Hace 1 min</div></div></div>
+            <div class="notif-item"><div class="ic green">✅</div><div><div class="t">La máquina ya está disponible</div><div class="d">Press de banca está libre, tienes 2 minutos para tomarla</div><div class="time">Hace 22 min</div></div></div>
+            <div class="notif-item"><div class="ic gray">🚫</div><div><div class="t">Fuiste removido de la fila por inactividad</div><div class="d">Prensa de piernas — no confirmaste tu turno a tiempo</div><div class="time">Hace 1 h</div></div></div>
+            <div class="notif-item"><div class="ic blue">📊</div><div><div class="t">Tu resumen semanal está listo</div><div class="d">Entrenaste 3h 40min esta semana, +12% vs. anterior</div><div class="time">Ayer</div></div></div>
+          </div>
+
+          <!-- ALTERNATIVE ROUTINES -->
+          <div class="m-screen" id="m-routines">
+            <div class="m-h1" style="margin-top:0;">Mientras esperas</div>
+            <div class="m-sub">La prensa de piernas está ocupada — prueba esto:</div>
+            <div class="exercise-row"><div class="n">1</div><div><div class="et">Sentadilla libre</div><div class="em">4 series × 12 repeticiones</div></div></div>
+            <div class="exercise-row"><div class="n">2</div><div><div class="et">Peso muerto rumano</div><div class="em">3 series × 10 repeticiones</div></div></div>
+            <div class="exercise-row"><div class="n">3</div><div><div class="et">Extensión de pierna</div><div class="em">3 series × 15 repeticiones</div></div></div>
+            <div class="m-card" style="background:var(--green-soft); margin-top:6px;">
+              <div style="font-size:12px; font-weight:700; color:#0a8a5f;">🎯 Mantén tu rutina activa</div>
+              <div style="font-size:11.5px; color:#0a8a5f; margin-top:3px;">Te avisaremos en cuanto la prensa de piernas quede libre.</div>
+            </div>
+          </div>
+
+          <!-- PROFILE -->
+          <div class="m-screen" id="m-profile">
+            <div class="profile-head">
+              <div class="av">AG</div>
+              <div><div class="nm">Ana Gómez</div><div class="since">Miembro desde marzo 2025</div></div>
+            </div>
+            <div class="m-grid2">
+              <div class="m-stat"><div class="v">142h</div><div class="l">Tiempo total entrenado</div></div>
+              <div class="m-stat"><div class="v">96</div><div class="l">Visitas totales</div></div>
+            </div>
+            <div class="section-title">Máquinas más utilizadas</div>
+            <div class="bar-mini-row"><div class="nm">Caminadora</div><div class="track"><div class="fill" style="width:80%;"></div></div><div class="v">80%</div></div>
+            <div class="bar-mini-row"><div class="nm">Press banca</div><div class="track"><div class="fill" style="width:64%;"></div></div><div class="v">64%</div></div>
+            <div class="bar-mini-row"><div class="nm">Sentadilla</div><div class="track"><div class="fill" style="width:48%;"></div></div><div class="v">48%</div></div>
+            <div class="section-title">Logros</div>
+            <div class="badge-row">
+              <div class="badge">🔥 Racha de 12 días</div>
+              <div class="badge">🏆 Top 10% del gimnasio</div>
+              <div class="badge">⏱️ 100h entrenadas</div>
+            </div>
+          </div>
+
+        </div>
+        <div class="m-navbar" id="mobileNavbar">
+          <div class="m-tab active" data-screen="m-home" onclick="goScreen('m-home',this)">🏠<span>Inicio</span></div>
+          <div class="m-tab" data-screen="m-availability" onclick="goScreen('m-availability',this)">🏋️<span>Máquinas</span></div>
+          <div class="m-tab" data-screen="m-queue" onclick="goScreen('m-queue',this)">⏳<span>Fila</span></div>
+          <div class="m-tab" data-screen="m-notifs" onclick="goScreen('m-notifs',this)">🔔<span>Avisos</span></div>
+          <div class="m-tab" data-screen="m-routines" onclick="goScreen('m-routines',this)">💪<span>Rutinas</span></div>
+          <div class="m-tab" data-screen="m-profile" onclick="goScreen('m-profile',this)">👤<span>Perfil</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="mobile-caption">Navega las 7 pantallas con la barra inferior</div>
+  </div>
+
+  <div style="max-width:380px; padding-top:40px;">
+    <div class="card">
+      <h3>Acerca de este prototipo</h3>
+      <div class="card-sub">App móvil — usuarios del gimnasio</div>
+      <p style="font-size:12.5px; color:var(--slate); line-height:1.6;">
+        Esta pantalla simula la experiencia completa de un usuario de GYMLITICS: desde el inicio de sesión hasta unirse a una fila virtual, recibir notificaciones en tiempo real y consultar rutinas alternativas mientras espera.
+      </p>
+      <p style="font-size:12.5px; color:var(--slate); line-height:1.6;">
+        Usa la barra de navegación inferior del teléfono para moverte entre <b>Inicio</b>, <b>Máquinas</b>, <b>Fila virtual</b>, <b>Notificaciones</b>, <b>Rutinas</b> y <b>Perfil</b>.
+      </p>
+      <div class="m-login-cta"><button onclick="goLogin()">↺ Ver pantalla de inicio de sesión</button></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchApp(app){
+  document.getElementById('btn-web').classList.toggle('active', app==='web');
+  document.getElementById('btn-mobile').classList.toggle('active', app==='mobile');
+  document.getElementById('web-app').classList.toggle('active', app==='web');
+  document.getElementById('mobile-app').classList.toggle('active', app==='mobile');
+}
+function switchWebView(id, el){
+  document.querySelectorAll('#web-app .view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.side-link').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+}
+function goScreen(id, el){
+  document.querySelectorAll('.m-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.m-tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('mobileNavbar').style.display = (id==='m-login') ? 'none' : 'flex';
+}
+function goHome(){ goScreen('m-home', document.querySelector('.m-tab[data-screen="m-home"]')); }
+function goLogin(){ goScreen('m-login', null); }
+function goQueue(){ goScreen('m-queue', document.querySelector('.m-tab[data-screen="m-queue"]')); }
+
+// Build heatmap bars (signature element, shared logic)
+const hours = ['6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22'];
+const occ =   [20,35,45,40,30,25,30,35,30,28,35,55,82,95,92,70,40];
+function buildHeatmap(containerId, showAllLabels){
+  const c = document.getElementById(containerId);
+  if(!c) return;
+  c.innerHTML='';
+  hours.forEach((h,i)=>{
+    const wrap = document.createElement('div'); wrap.className='bar-wrap';
+    const bar = document.createElement('div'); bar.className='bar'+(occ[i]>=80?' peak':'');
+    bar.style.height = Math.max(occ[i],6)+'%';
+    const lbl = document.createElement('div'); lbl.className='hr'; lbl.textContent = (showAllLabels || i%3===0) ? h : '';
+    wrap.appendChild(bar); wrap.appendChild(lbl);
+    c.appendChild(wrap);
+  });
+}
+buildHeatmap('heatmapWeb', false);
+buildHeatmap('heatmapMobile', false);
+
+// Machines table data
+const machines = [
+  ['Máquina Smith','Piernas','occ','18 min','4'],
+  ['Prensa de piernas','Piernas','occ','15 min','2'],
+  ['Caminadora 03','Cardio','disp','22 min','0'],
+  ['Press de banca','Pecho','disp','14 min','0'],
+  ['Remo en polea','Espalda','occ','12 min','3'],
+  ['Bicicleta 07','Cardio','disp','19 min','0'],
+  ['Press militar','Hombros','maint','—','0'],
+  ['Extensión de cuádriceps','Piernas','occ','10 min','1'],
+  ['Polea alta','Espalda','disp','13 min','0'],
+  ['Elíptica 02','Cardio','occ','24 min','2'],
+];
+const statusMap = {disp:['Disponible','disp'], occ:['Ocupada','occ'], maint:['Mantenimiento','maint']};
+const tbody = document.getElementById('machinesTbody');
+machines.forEach(m=>{
+  const [label,cls] = statusMap[m[2]];
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td style="font-weight:600;">${m[0]}</td><td>${m[1]}</td><td><span class="status-chip ${cls}"><span class="dot"></span>${label}</span></td><td>${m[3]}</td><td>${m[4]}</td>
+  <td><div class="actions-cell"><div class="icon-btn">✎</div><div class="icon-btn">🗑</div></div></td>`;
+  tbody.appendChild(tr);
+});
+
+// Users table data
+const users = [
+  ['Ana Gómez','AG','5x / semana','58 min','18:00–19:30','Caminadora'],
+  ['Jorge Luna','JL','3x / semana','45 min','7:00–8:00','Press de banca'],
+  ['María Torres','MT','6x / semana','62 min','19:00–20:30','Máquina Smith'],
+  ['Carlos Díaz','CD','2x / semana','38 min','12:00–13:00','Bicicleta'],
+  ['Sofía Ruiz','SR','4x / semana','50 min','17:30–18:30','Prensa de piernas'],
+];
+const utbody = document.getElementById('usersTbody');
+users.forEach(u=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><div class="usr-meta"><div class="usr-avatar">${u[1]}</div><div style="font-weight:600;">${u[0]}</div></div></td><td>${u[2]}</td><td>${u[3]}</td><td>${u[4]}</td><td>${u[5]}</td>`;
+  utbody.appendChild(tr);
+});
+
+// Charts
+window.addEventListener('load', ()=>{
+  const navy='#1E3A8A', blue='#3B82F6', grid='#E6E9F2';
+  new Chart(document.getElementById('lineChart'), {
+    type:'line',
+    data:{ labels:['Sem 1','Sem 2','Sem 3','Sem 4'],
+      datasets:[{label:'Ocupación %', data:[48,52,55,58], borderColor:navy, backgroundColor:'rgba(59,130,246,.12)', fill:true, tension:.4, pointBackgroundColor:navy}]},
+    options:{plugins:{legend:{display:false}}, scales:{y:{grid:{color:grid}, ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}}}}
+  });
+  new Chart(document.getElementById('barChart'), {
+    type:'bar',
+    data:{ labels:['Piernas','Pecho','Espalda','Cardio','Funcional'],
+      datasets:[{label:'Uso %', data:[88,69,61,76,42], backgroundColor:[navy,blue,blue,blue,'#93C5FD'], borderRadius:6}]},
+    options:{plugins:{legend:{display:false}}, scales:{y:{grid:{color:grid}, ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}}}}
+  });
+  new Chart(document.getElementById('weekBarChart'), {
+    type:'bar',
+    data:{ labels:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],
+      datasets:[{label:'Ocupación %', data:[52,55,58,60,68,74,49], backgroundColor:navy, borderRadius:6, maxBarThickness:48}]},
+    options:{plugins:{legend:{display:false}}, scales:{y:{grid:{color:grid}, ticks:{callback:v=>v+'%'}}, x:{grid:{display:false}}}}
+  });
+});
+</script>
+</body>
+</html>
